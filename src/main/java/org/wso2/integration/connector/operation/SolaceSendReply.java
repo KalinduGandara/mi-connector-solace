@@ -110,7 +110,7 @@ public class SolaceSendReply extends AbstractConnectorOperation {
 
             // Send the reply using JCSMP's native sendReply API
             connection.sendReply(inboundMessage, payload, deliveryMode, messageType, msgProperties,
-                    httpContentType);
+                    httpContentType, messageContext);
 
             // Legacy solace.* context properties — kept for callers that read them directly.
             String replyToName = inboundMessage.getReplyTo() != null
