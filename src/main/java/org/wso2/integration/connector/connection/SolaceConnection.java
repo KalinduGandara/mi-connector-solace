@@ -18,6 +18,7 @@
 
 package org.wso2.integration.connector.connection;
 
+import com.solace.messaging.trace.propagation.SolaceJCSMPTextMapSetter;
 import com.solacesystems.jcsmp.Browser;
 import com.solacesystems.jcsmp.BrowserProperties;
 import com.solacesystems.jcsmp.BytesMessage;
@@ -64,6 +65,9 @@ import java.util.concurrent.TimeoutException;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.synapse.MessageContext;
+import org.apache.synapse.aspects.flow.statistics.collectors.RuntimeStatisticCollector;
+import org.apache.synapse.aspects.flow.statistics.tracing.opentelemetry.management.handling.span.SpanHandler;
 import org.wso2.integration.connector.constants.SolaceConstants;
 import org.wso2.integration.connector.core.ConnectException;
 import org.wso2.integration.connector.core.connection.Connection;
@@ -78,6 +82,11 @@ import org.wso2.integration.connector.models.SolaceMessageProperties;
 public class SolaceConnection implements Connection {
 
     private static final Log log = LogFactory.getLog(SolaceConnection.class);
+
+    /**
+     * Writes W3C trace context into a JCSMP message.
+     */
+    private static final SolaceJCSMPTextMapSetter TRACE_CONTEXT_SETTER = new SolaceJCSMPTextMapSetter();
 
     private JCSMPSession session;
     private XMLMessageProducer producer;
@@ -136,25 +145,27 @@ public class SolaceConnection implements Connection {
      * @param properties       additional message properties (may be null)
      * @param waitForAck       if true and delivery is guaranteed, block for broker ACK
      * @param ackTimeoutMillis maximum time to wait for the broker ACK (ignored when waitForAck=false)
+     * @param synCtx           mediation context of the caller, used to propagate the trace context
      * @throws JCSMPException if publishing fails, the broker NACKs, or the ACK wait times out
      */
     public PublishResult publish(String destinationType, String destinationName, String payload,
                                  String deliveryMode, String messageType, SolaceMessageProperties properties,
-                                 boolean waitForAck, long ackTimeoutMillis)
+                                 boolean waitForAck, long ackTimeoutMillis, MessageContext synCtx)
             throws JCSMPException {
         return publish(destinationType, destinationName, payload, deliveryMode, messageType, properties,
-                waitForAck, ackTimeoutMillis, null);
+                waitForAck, ackTimeoutMillis, null, synCtx);
     }
 
     public PublishResult publish(String destinationType, String destinationName, String payload,
                                  String deliveryMode, String messageType, SolaceMessageProperties properties,
-                                 boolean waitForAck, long ackTimeoutMillis, String httpContentType)
+                                 boolean waitForAck, long ackTimeoutMillis, String httpContentType,
+                                 MessageContext synCtx)
             throws JCSMPException {
 
         // Check whether multiple calls cause error or handled internally
         Destination destination = resolveDestination(destinationType, destinationName);
 
-        BytesXMLMessage message = createMessage(messageType, payload);
+        BytesXMLMessage message = createMessage(messageType, payload, synCtx);
         if (httpContentType != null && !httpContentType.isEmpty()) {
             message.setHTTPContentType(httpContentType);
         }
@@ -248,18 +259,20 @@ public class SolaceConnection implements Connection {
      * @param deliveryMode   DIRECT, PERSISTENT, or NON_PERSISTENT (default: DIRECT)
      * @param messageType    message type: TEXT, BYTES, or XML (default: TEXT; JSON travels as TEXT)
      * @param properties     additional reply message properties (may be null)
+     * @param synCtx         mediation context of the caller, used to propagate the trace context
      * @throws JCSMPException if publishing fails
      */
     public void sendReply(BytesXMLMessage inboundMessage, String payload, String deliveryMode,
-                          String messageType, SolaceMessageProperties properties) throws JCSMPException {
-        sendReply(inboundMessage, payload, deliveryMode, messageType, properties, null);
+                          String messageType, SolaceMessageProperties properties,
+                          MessageContext synCtx) throws JCSMPException {
+        sendReply(inboundMessage, payload, deliveryMode, messageType, properties, null, synCtx);
     }
 
     public void sendReply(BytesXMLMessage inboundMessage, String payload, String deliveryMode,
                           String messageType, SolaceMessageProperties properties,
-                          String httpContentType) throws JCSMPException {
+                          String httpContentType, MessageContext synCtx) throws JCSMPException {
 
-        BytesXMLMessage replyMessage = createMessage(messageType, payload);
+        BytesXMLMessage replyMessage = createMessage(messageType, payload, synCtx);
         if (httpContentType != null && !httpContentType.isEmpty()) {
             replyMessage.setHTTPContentType(httpContentType);
         }
@@ -322,28 +335,29 @@ public class SolaceConnection implements Connection {
      * @param messageType     message type: TEXT, BYTES, or XML (JSON travels as TEXT)
      * @param properties      optional request message properties (may be null)
      * @param timeoutMillis   maximum time to wait for a reply
+     * @param synCtx          mediation context of the caller, used to propagate the trace context
      * @return the reply message
      * @throws JCSMPRequestTimeoutException if no reply arrives within the timeout
      * @throws JCSMPException               if the request cannot be sent or flow setup fails
      */
     public BytesXMLMessage sendRequest(String destinationType, String destinationName, String payload,
                                        String deliveryMode, String messageType,
-                                       SolaceMessageProperties properties, long timeoutMillis)
+                                       SolaceMessageProperties properties, long timeoutMillis, MessageContext synCtx)
             throws JCSMPException {
         return sendRequest(destinationType, destinationName, payload, deliveryMode, messageType,
-                properties, timeoutMillis, null);
+                properties, timeoutMillis, null, synCtx);
     }
 
     public BytesXMLMessage sendRequest(String destinationType, String destinationName, String payload,
                                        String deliveryMode, String messageType,
                                        SolaceMessageProperties properties, long timeoutMillis,
-                                       String httpContentType)
+                                       String httpContentType, MessageContext synCtx)
             throws JCSMPException {
 
         Destination destination = resolveDestination(destinationType, destinationName);
         DeliveryMode resolvedMode = resolveDeliveryMode(deliveryMode);
 
-        BytesXMLMessage requestMessage = createMessage(messageType, payload);
+        BytesXMLMessage requestMessage = createMessage(messageType, payload, synCtx);
         if (httpContentType != null && !httpContentType.isEmpty()) {
             requestMessage.setHTTPContentType(httpContentType);
         }
@@ -450,28 +464,46 @@ public class SolaceConnection implements Connection {
      * Creates a message of the specified type with the given payload. Supports TEXT, BYTES, and XML.
      * JSON payloads are carried as TEXT on the wire (Solace has no JSON message type); callers are
      * expected to pass messageType=TEXT for JSON content.
+     *
+     * @param messageType message type: TEXT, BYTES, or XML (default: TEXT)
+     * @param payload     the message payload
+     * @param synCtx      mediation context of the caller, used to propagate the trace context
+     * @return the created message, carrying the trace context when tracing is enabled
      */
-    private BytesXMLMessage createMessage(String messageType, String payload) {
+    private BytesXMLMessage createMessage(String messageType, String payload, MessageContext synCtx) {
         if (messageType == null) {
             messageType = SolaceConstants.MESSAGE_TYPE_TEXT;
         }
+        BytesXMLMessage message;
         switch (messageType.toUpperCase()) {
             case SolaceConstants.MESSAGE_TYPE_BYTES:
                 BytesMessage bytesMsg = JCSMPFactory.onlyInstance().createMessage(BytesMessage.class);
                 bytesMsg.setData(payload != null ? payload.getBytes() : new byte[0]);
-                return bytesMsg;
+                message = bytesMsg;
+                break;
             case SolaceConstants.MESSAGE_TYPE_XML:
                 XMLContentMessage xmlMsg = JCSMPFactory.onlyInstance().createMessage(XMLContentMessage.class);
                 if (payload != null) {
                     xmlMsg.setXMLContent(payload);
                 }
-                return xmlMsg;
+                message = xmlMsg;
+                break;
             case SolaceConstants.MESSAGE_TYPE_TEXT:
             default:
                 TextMessage textMsg = JCSMPFactory.onlyInstance().createMessage(TextMessage.class);
                 textMsg.setText(payload);
-                return textMsg;
+                message = textMsg;
         }
+        if (RuntimeStatisticCollector.isOpenTelemetryEnabled()) {
+            try {
+                SpanHandler.injectTraceContext(synCtx, message, TRACE_CONTEXT_SETTER);
+            } catch (NoSuchMethodError e) {
+                log.warn("You are running solace connector on old wso2mi version. " +
+                        "Distributed tracing will not working correctly in this version. " +
+                        "Please upgrade to wso2mi 4.6.0.12 or above.");
+            }
+        }
+        return message;
     }
 
     /**
@@ -682,7 +714,8 @@ public class SolaceConnection implements Connection {
 
     public PublishResult publishTransacted(String destinationType, String destinationName,
                                        String payload, String deliveryMode, String messageType,
-                                       SolaceMessageProperties properties, String httpContentType)
+                                       SolaceMessageProperties properties, String httpContentType,
+                                       MessageContext synCtx)
         throws JCSMPException {
         synchronized (txLock) {
             if (txProducer == null) {
@@ -693,7 +726,7 @@ public class SolaceConnection implements Connection {
                     + connectionId);
             }
             Destination destination = resolveDestination(destinationType, destinationName);
-            BytesXMLMessage msg = createMessage(messageType, payload);
+            BytesXMLMessage msg = createMessage(messageType, payload, synCtx);
             if (httpContentType != null && !httpContentType.isEmpty()) {
                 msg.setHTTPContentType(httpContentType);
             }

@@ -170,12 +170,13 @@ public class SolacePublishMessage extends AbstractConnectorOperation {
                             + destinationType + " '" + destinationName + "' (deliveryMode=" + deliveryMode
                             + ", messageType=" + messageType + ")");
                     result = connection.publishTransacted(destinationType, destinationName, payload,
-                            deliveryMode, messageType, msgProperties, httpContentType);
+                            deliveryMode, messageType, msgProperties, httpContentType, messageContext);
                     log.info("solace.publishMessage: txId=" + txId + " transacted send queued (correlationKey="
                             + result.getCorrelationKey() + ", ackStatus=" + result.getAckStatus() + ")");
                 } else {
                     result = connection.publish(destinationType, destinationName, payload,
-                            deliveryMode, messageType, msgProperties, waitForAck, ackTimeout, httpContentType);
+                            deliveryMode, messageType, msgProperties, waitForAck, ackTimeout,
+                            httpContentType, messageContext);
                 }
 
                 if (log.isDebugEnabled()) {

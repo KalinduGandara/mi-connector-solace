@@ -28,7 +28,8 @@
     <properties>
         <connector.name>solace</connector.name>
         <solace.jcsmp.version>10.30.1</solace.jcsmp.version>
-        <synapse.version>4.0.0-wso2v215</synapse.version>
+        <solace.otel.version>1.2.0</solace.otel.version>
+        <synapse.version>4.1.0-wso2v71</synapse.version>
         <connector.core.version>0.9.3</connector.core.version>
         <org.wso2.json.version>3.0.0.wso2v8</org.wso2.json.version>
         <maven.test.skip>true</maven.test.skip>
@@ -39,6 +40,12 @@
             <groupId>com.solacesystems</groupId>
             <artifactId>sol-jcsmp</artifactId>
             <version>${solace.jcsmp.version}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.solace</groupId>
+            <artifactId>solace-opentelemetry-jcsmp-integration</artifactId>
+            <version>${solace.otel.version}</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
