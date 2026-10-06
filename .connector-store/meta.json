@@ -17,319 +17,11 @@
     ],
     "releases": [
         {
-            "tagName": "v1.0.0",
+            "tagName": "v1.0.1",
             "products": [
                 "MI 4.6.0"
             ],
             "operations": [
-                {
-                    "name": "requestCachedMessages",
-                    "description": "Request Cached Messages",
-                    "params": [
-                        {
-                            "name": "cacheName",
-                            "type": "stringOrExpression",
-                            "required": true,
-                            "defaultValue": "",
-                            "description": "REQUIRED. Name of the PubSub+ Cache Instance configured on the broker for this VPN. The instance must be deployed, joined to the VPN, and have caching enabled for the requested topic pattern. Verify in PubSub+ Manager: Cluster Manager > Cache Instances."
-                        },
-                        {
-                            "name": "topicPattern",
-                            "type": "stringOrExpression",
-                            "required": true,
-                            "defaultValue": "",
-                            "description": "REQUIRED. Topic name or wildcard pattern to retrieve cached messages for (e.g., stock/AAPL or stock/>). The cache instance must already be subscribed to this pattern administratively \u2014 clients cannot create cache subscriptions on the fly."
-                        },
-                        {
-                            "name": "cacheMaxMessages",
-                            "type": "stringOrExpression",
-                            "required": false,
-                            "defaultValue": "0",
-                            "description": "Maximum cached messages to request. 0 means unlimited (subject to broker-side cache instance limits)."
-                        },
-                        {
-                            "name": "cacheMaxAgeSeconds",
-                            "type": "stringOrExpression",
-                            "required": false,
-                            "defaultValue": "0",
-                            "description": "Maximum age of cached messages to return, in seconds. 0 means any age."
-                        },
-                        {
-                            "name": "cacheRequestTimeout",
-                            "type": "stringOrExpression",
-                            "required": false,
-                            "defaultValue": "10000",
-                            "description": "Maximum time the cache request itself may take in milliseconds. Default: 10000."
-                        },
-                        {
-                            "name": "liveDataAction",
-                            "type": "combo",
-                            "required": false,
-                            "defaultValue": "FULFILL",
-                            "description": "How live messages on the same topic interleave with cached delivery. FULFILL: cached messages first, then live (recommended for cold start). FLOW_THRU: interleave (lowest latency for live). QUEUE: queue live messages until cache delivery completes. Supported values: FULFILL, FLOW_THRU, QUEUE"
-                        },
-                        {
-                            "name": "responseVariable",
-                            "type": "stringOrExpression",
-                            "required": false,
-                            "defaultValue": "solaceCacheResponse",
-                            "description": "Property name where the result JSON is stored. Contains: cacheName, topicPattern, messageCount, messages (array of cached message summaries with payload + headers)."
-                        },
-                        {
-                            "name": "overwriteBody",
-                            "type": "boolean",
-                            "required": false,
-                            "defaultValue": false,
-                            "description": "Unused for cache request \u2014 messages are returned via the response variable."
-                        }
-                    ],
-                    "isHidden": true
-                },
-                {
-                    "name": "sendRequest",
-                    "description": "Send Request",
-                    "params": [
-                        {
-                            "name": "destinationType",
-                            "type": "combo",
-                            "required": true,
-                            "defaultValue": "TOPIC",
-                            "description": "Destination type: TOPIC or QUEUE. Supported values: TOPIC, QUEUE"
-                        },
-                        {
-                            "name": "destinationName",
-                            "type": "stringOrExpression",
-                            "required": true,
-                            "defaultValue": "",
-                            "description": "Name of the topic or queue to send the request to."
-                        },
-                        {
-                            "name": "messageType",
-                            "type": "combo",
-                            "required": false,
-                            "defaultValue": "TEXT",
-                            "description": "Message type: TEXT, BYTES, or XML. JSON payloads are auto-detected and carried as TEXT. Supported values: TEXT, BYTES, XML"
-                        },
-                        {
-                            "name": "requestTimeout",
-                            "type": "stringOrExpression",
-                            "required": false,
-                            "defaultValue": "30000",
-                            "description": "Maximum time to wait for response in milliseconds (default: 30000)."
-                        },
-                        {
-                            "name": "deliveryMode",
-                            "type": "combo",
-                            "required": false,
-                            "defaultValue": "DIRECT",
-                            "description": "Delivery mode. DIRECT is valid only for TOPIC destinations (best-effort pub/sub). QUEUE destinations require PERSISTENT or NON_PERSISTENT (guaranteed delivery). Supported values: DIRECT, PERSISTENT, NON_PERSISTENT"
-                        },
-                        {
-                            "name": "applicationMessageId",
-                            "type": "stringOrExpression",
-                            "required": false,
-                            "defaultValue": "",
-                            "description": "Application-defined message ID."
-                        },
-                        {
-                            "name": "applicationMessageType",
-                            "type": "stringOrExpression",
-                            "required": false,
-                            "defaultValue": "",
-                            "description": "Application-defined message type."
-                        },
-                        {
-                            "name": "responseVariable",
-                            "type": "stringOrExpression",
-                            "required": false,
-                            "defaultValue": "solaceResponse",
-                            "description": "The name of the variable to which the output should be stored."
-                        },
-                        {
-                            "name": "overwriteBody",
-                            "type": "boolean",
-                            "required": false,
-                            "defaultValue": false,
-                            "description": "Replace the Message Body in Message Context with the response."
-                        }
-                    ],
-                    "isHidden": false
-                },
-                {
-                    "name": "poll",
-                    "description": "Poll Message",
-                    "params": [
-                        {
-                            "name": "queueName",
-                            "type": "stringOrExpression",
-                            "required": true,
-                            "defaultValue": "",
-                            "description": "Name of the queue to poll."
-                        },
-                        {
-                            "name": "pollTimeout",
-                            "type": "stringOrExpression",
-                            "required": false,
-                            "defaultValue": "5000",
-                            "description": "Maximum time to wait for a message in milliseconds. Default: 5000."
-                        },
-                        {
-                            "name": "selector",
-                            "type": "stringOrExpression",
-                            "required": false,
-                            "defaultValue": "",
-                            "description": "Optional JMS-style selector expression for filtering (e.g., region = 'EU' AND priority > 5). Leave blank to match any message."
-                        },
-                        {
-                            "name": "responseVariable",
-                            "type": "stringOrExpression",
-                            "required": false,
-                            "defaultValue": "solacePollResponse",
-                            "description": "Property name where the result JSON is stored. Contains: destination, received, timedOut, messageId, correlationId, payload, contentType."
-                        },
-                        {
-                            "name": "overwriteBody",
-                            "type": "boolean",
-                            "required": false,
-                            "defaultValue": false,
-                            "description": "Replace the message body in Message Context with the polled message's payload."
-                        }
-                    ],
-                    "isHidden": false
-                },
-                {
-                    "name": "browse",
-                    "description": "Browse Queue",
-                    "params": [
-                        {
-                            "name": "queueName",
-                            "type": "stringOrExpression",
-                            "required": true,
-                            "defaultValue": "",
-                            "description": "Name of the queue to browse."
-                        },
-                        {
-                            "name": "maxMessages",
-                            "type": "stringOrExpression",
-                            "required": false,
-                            "defaultValue": "10",
-                            "description": "Maximum number of messages to return. Default: 10."
-                        },
-                        {
-                            "name": "browseTimeout",
-                            "type": "stringOrExpression",
-                            "required": false,
-                            "defaultValue": "2000",
-                            "description": "Maximum time to wait per message read in milliseconds. Browse stops once no message arrives within this window. Default: 2000."
-                        },
-                        {
-                            "name": "selector",
-                            "type": "stringOrExpression",
-                            "required": false,
-                            "defaultValue": "",
-                            "description": "Optional JMS-style selector expression for filtering (e.g., region = 'EU' AND priority > 5). Leave blank to match any message."
-                        },
-                        {
-                            "name": "responseVariable",
-                            "type": "stringOrExpression",
-                            "required": false,
-                            "defaultValue": "solaceBrowseResponse",
-                            "description": "Property name where the result JSON is stored. Contains: destination, messageCount, messages (array of message summaries with payload + headers)."
-                        },
-                        {
-                            "name": "overwriteBody",
-                            "type": "boolean",
-                            "required": false,
-                            "defaultValue": false,
-                            "description": "Unused for browse \u2014 messages are returned via the response variable."
-                        }
-                    ],
-                    "isHidden": false
-                },
-                {
-                    "name": "acknowledgeMessage",
-                    "description": "Acknowledge Message",
-                    "params": [
-                        {
-                            "name": "description",
-                            "type": "string",
-                            "required": false,
-                            "defaultValue": "",
-                            "description": "Description of the operation."
-                        },
-                        {
-                            "name": "responseVariable",
-                            "type": "stringOrExpression",
-                            "required": false,
-                            "defaultValue": "solaceAckResponse",
-                            "description": "Property name where the operation result is stored."
-                        },
-                        {
-                            "name": "overwriteBody",
-                            "type": "boolean",
-                            "required": false,
-                            "defaultValue": false,
-                            "description": "Replace the Message Body in Message Context with the response of the operation."
-                        }
-                    ],
-                    "isHidden": false
-                },
-                {
-                    "name": "sendReply",
-                    "description": "Send Reply",
-                    "params": [
-                        {
-                            "name": "deliveryMode",
-                            "type": "combo",
-                            "required": false,
-                            "defaultValue": "DIRECT",
-                            "description": "Delivery mode: DIRECT, PERSISTENT, or NON_PERSISTENT. Supported values: DIRECT, PERSISTENT, NON_PERSISTENT"
-                        },
-                        {
-                            "name": "messageType",
-                            "type": "combo",
-                            "required": false,
-                            "defaultValue": "TEXT",
-                            "description": "Message type: TEXT, BYTES, or XML. JSON payloads are auto-detected and carried as TEXT. Supported values: TEXT, BYTES, XML"
-                        },
-                        {
-                            "name": "applicationMessageType",
-                            "type": "stringOrExpression",
-                            "required": false,
-                            "defaultValue": "",
-                            "description": "Application-defined message type."
-                        },
-                        {
-                            "name": "responseVariable",
-                            "type": "stringOrExpression",
-                            "required": false,
-                            "defaultValue": "solaceResponse",
-                            "description": "The name of the variable to which the output should be stored."
-                        },
-                        {
-                            "name": "overwriteBody",
-                            "type": "boolean",
-                            "required": false,
-                            "defaultValue": false,
-                            "description": "Replace the Message Body in Message Context with the response."
-                        }
-                    ],
-                    "isHidden": false
-                },
-                {
-                    "name": "beginTransaction",
-                    "description": "Begin Transaction",
-                    "params": [
-                        {
-                            "name": "transactionTimeoutMillis",
-                            "type": "string",
-                            "required": false,
-                            "defaultValue": "60000",
-                            "description": "Auto-rollback after this many ms if commit/rollback isn't reached. Prevents leaks from forgotten or faulted sequences."
-                        }
-                    ],
-                    "isHidden": false
-                },
                 {
                     "name": "publishMessage",
                     "description": "Publish Message",
@@ -464,6 +156,90 @@
                     "isHidden": false
                 },
                 {
+                    "name": "commit",
+                    "description": "Commit Transaction",
+                    "params": [
+                        {
+                            "name": "description",
+                            "type": "string",
+                            "required": false,
+                            "defaultValue": "",
+                            "description": "Description of the operation."
+                        },
+                        {
+                            "name": "responseVariable",
+                            "type": "stringOrExpression",
+                            "required": false,
+                            "defaultValue": "solaceResponse",
+                            "description": "Property name where the operation result is stored."
+                        },
+                        {
+                            "name": "overwriteBody",
+                            "type": "boolean",
+                            "required": false,
+                            "defaultValue": false,
+                            "description": "Replace the Message Body in Message Context with the response of the operation."
+                        }
+                    ],
+                    "isHidden": false
+                },
+                {
+                    "name": "beginTransaction",
+                    "description": "Begin Transaction",
+                    "params": [
+                        {
+                            "name": "transactionTimeoutMillis",
+                            "type": "string",
+                            "required": false,
+                            "defaultValue": "60000",
+                            "description": "Auto-rollback after this many ms if commit/rollback isn't reached. Prevents leaks from forgotten or faulted sequences."
+                        }
+                    ],
+                    "isHidden": false
+                },
+                {
+                    "name": "poll",
+                    "description": "Poll Message",
+                    "params": [
+                        {
+                            "name": "queueName",
+                            "type": "stringOrExpression",
+                            "required": true,
+                            "defaultValue": "",
+                            "description": "Name of the queue to poll."
+                        },
+                        {
+                            "name": "pollTimeout",
+                            "type": "stringOrExpression",
+                            "required": false,
+                            "defaultValue": "5000",
+                            "description": "Maximum time to wait for a message in milliseconds. Default: 5000."
+                        },
+                        {
+                            "name": "selector",
+                            "type": "stringOrExpression",
+                            "required": false,
+                            "defaultValue": "",
+                            "description": "Optional JMS-style selector expression for filtering (e.g., region = 'EU' AND priority > 5). Leave blank to match any message."
+                        },
+                        {
+                            "name": "responseVariable",
+                            "type": "stringOrExpression",
+                            "required": false,
+                            "defaultValue": "solacePollResponse",
+                            "description": "Property name where the result JSON is stored. Contains: destination, received, timedOut, messageId, correlationId, payload, contentType."
+                        },
+                        {
+                            "name": "overwriteBody",
+                            "type": "boolean",
+                            "required": false,
+                            "defaultValue": false,
+                            "description": "Replace the message body in Message Context with the polled message's payload."
+                        }
+                    ],
+                    "isHidden": false
+                },
+                {
                     "name": "nackMessage",
                     "description": "Nack Message",
                     "params": [
@@ -527,8 +303,190 @@
                     "isHidden": false
                 },
                 {
-                    "name": "commit",
-                    "description": "Commit Transaction",
+                    "name": "sendRequest",
+                    "description": "Send Request",
+                    "params": [
+                        {
+                            "name": "destinationType",
+                            "type": "combo",
+                            "required": true,
+                            "defaultValue": "TOPIC",
+                            "description": "Destination type: TOPIC or QUEUE. Supported values: TOPIC, QUEUE"
+                        },
+                        {
+                            "name": "destinationName",
+                            "type": "stringOrExpression",
+                            "required": true,
+                            "defaultValue": "",
+                            "description": "Name of the topic or queue to send the request to."
+                        },
+                        {
+                            "name": "messageType",
+                            "type": "combo",
+                            "required": false,
+                            "defaultValue": "TEXT",
+                            "description": "Message type: TEXT, BYTES, or XML. JSON payloads are auto-detected and carried as TEXT. Supported values: TEXT, BYTES, XML"
+                        },
+                        {
+                            "name": "requestTimeout",
+                            "type": "stringOrExpression",
+                            "required": false,
+                            "defaultValue": "30000",
+                            "description": "Maximum time to wait for response in milliseconds (default: 30000)."
+                        },
+                        {
+                            "name": "deliveryMode",
+                            "type": "combo",
+                            "required": false,
+                            "defaultValue": "DIRECT",
+                            "description": "Delivery mode. DIRECT is valid only for TOPIC destinations (best-effort pub/sub). QUEUE destinations require PERSISTENT or NON_PERSISTENT (guaranteed delivery). Supported values: DIRECT, PERSISTENT, NON_PERSISTENT"
+                        },
+                        {
+                            "name": "applicationMessageId",
+                            "type": "stringOrExpression",
+                            "required": false,
+                            "defaultValue": "",
+                            "description": "Application-defined message ID."
+                        },
+                        {
+                            "name": "applicationMessageType",
+                            "type": "stringOrExpression",
+                            "required": false,
+                            "defaultValue": "",
+                            "description": "Application-defined message type."
+                        },
+                        {
+                            "name": "responseVariable",
+                            "type": "stringOrExpression",
+                            "required": false,
+                            "defaultValue": "solaceResponse",
+                            "description": "The name of the variable to which the output should be stored."
+                        },
+                        {
+                            "name": "overwriteBody",
+                            "type": "boolean",
+                            "required": false,
+                            "defaultValue": false,
+                            "description": "Replace the Message Body in Message Context with the response."
+                        }
+                    ],
+                    "isHidden": false
+                },
+                {
+                    "name": "requestCachedMessages",
+                    "description": "Request Cached Messages",
+                    "params": [
+                        {
+                            "name": "cacheName",
+                            "type": "stringOrExpression",
+                            "required": true,
+                            "defaultValue": "",
+                            "description": "REQUIRED. Name of the PubSub+ Cache Instance configured on the broker for this VPN. The instance must be deployed, joined to the VPN, and have caching enabled for the requested topic pattern. Verify in PubSub+ Manager: Cluster Manager > Cache Instances."
+                        },
+                        {
+                            "name": "topicPattern",
+                            "type": "stringOrExpression",
+                            "required": true,
+                            "defaultValue": "",
+                            "description": "REQUIRED. Topic name or wildcard pattern to retrieve cached messages for (e.g., stock/AAPL or stock/>). The cache instance must already be subscribed to this pattern administratively \u2014 clients cannot create cache subscriptions on the fly."
+                        },
+                        {
+                            "name": "cacheMaxMessages",
+                            "type": "stringOrExpression",
+                            "required": false,
+                            "defaultValue": "0",
+                            "description": "Maximum cached messages to request. 0 means unlimited (subject to broker-side cache instance limits)."
+                        },
+                        {
+                            "name": "cacheMaxAgeSeconds",
+                            "type": "stringOrExpression",
+                            "required": false,
+                            "defaultValue": "0",
+                            "description": "Maximum age of cached messages to return, in seconds. 0 means any age."
+                        },
+                        {
+                            "name": "cacheRequestTimeout",
+                            "type": "stringOrExpression",
+                            "required": false,
+                            "defaultValue": "10000",
+                            "description": "Maximum time the cache request itself may take in milliseconds. Default: 10000."
+                        },
+                        {
+                            "name": "liveDataAction",
+                            "type": "combo",
+                            "required": false,
+                            "defaultValue": "FULFILL",
+                            "description": "How live messages on the same topic interleave with cached delivery. FULFILL: cached messages first, then live (recommended for cold start). FLOW_THRU: interleave (lowest latency for live). QUEUE: queue live messages until cache delivery completes. Supported values: FULFILL, FLOW_THRU, QUEUE"
+                        },
+                        {
+                            "name": "responseVariable",
+                            "type": "stringOrExpression",
+                            "required": false,
+                            "defaultValue": "solaceCacheResponse",
+                            "description": "Property name where the result JSON is stored. Contains: cacheName, topicPattern, messageCount, messages (array of cached message summaries with payload + headers)."
+                        },
+                        {
+                            "name": "overwriteBody",
+                            "type": "boolean",
+                            "required": false,
+                            "defaultValue": false,
+                            "description": "Unused for cache request \u2014 messages are returned via the response variable."
+                        }
+                    ],
+                    "isHidden": true
+                },
+                {
+                    "name": "browse",
+                    "description": "Browse Queue",
+                    "params": [
+                        {
+                            "name": "queueName",
+                            "type": "stringOrExpression",
+                            "required": true,
+                            "defaultValue": "",
+                            "description": "Name of the queue to browse."
+                        },
+                        {
+                            "name": "maxMessages",
+                            "type": "stringOrExpression",
+                            "required": false,
+                            "defaultValue": "10",
+                            "description": "Maximum number of messages to return. Default: 10."
+                        },
+                        {
+                            "name": "browseTimeout",
+                            "type": "stringOrExpression",
+                            "required": false,
+                            "defaultValue": "2000",
+                            "description": "Maximum time to wait per message read in milliseconds. Browse stops once no message arrives within this window. Default: 2000."
+                        },
+                        {
+                            "name": "selector",
+                            "type": "stringOrExpression",
+                            "required": false,
+                            "defaultValue": "",
+                            "description": "Optional JMS-style selector expression for filtering (e.g., region = 'EU' AND priority > 5). Leave blank to match any message."
+                        },
+                        {
+                            "name": "responseVariable",
+                            "type": "stringOrExpression",
+                            "required": false,
+                            "defaultValue": "solaceBrowseResponse",
+                            "description": "Property name where the result JSON is stored. Contains: destination, messageCount, messages (array of message summaries with payload + headers)."
+                        },
+                        {
+                            "name": "overwriteBody",
+                            "type": "boolean",
+                            "required": false,
+                            "defaultValue": false,
+                            "description": "Unused for browse \u2014 messages are returned via the response variable."
+                        }
+                    ],
+                    "isHidden": false
+                },
+                {
+                    "name": "acknowledgeMessage",
+                    "description": "Acknowledge Message",
                     "params": [
                         {
                             "name": "description",
@@ -541,7 +499,7 @@
                             "name": "responseVariable",
                             "type": "stringOrExpression",
                             "required": false,
-                            "defaultValue": "solaceResponse",
+                            "defaultValue": "solaceAckResponse",
                             "description": "Property name where the operation result is stored."
                         },
                         {
@@ -550,6 +508,48 @@
                             "required": false,
                             "defaultValue": false,
                             "description": "Replace the Message Body in Message Context with the response of the operation."
+                        }
+                    ],
+                    "isHidden": false
+                },
+                {
+                    "name": "sendReply",
+                    "description": "Send Reply",
+                    "params": [
+                        {
+                            "name": "deliveryMode",
+                            "type": "combo",
+                            "required": false,
+                            "defaultValue": "DIRECT",
+                            "description": "Delivery mode: DIRECT, PERSISTENT, or NON_PERSISTENT. Supported values: DIRECT, PERSISTENT, NON_PERSISTENT"
+                        },
+                        {
+                            "name": "messageType",
+                            "type": "combo",
+                            "required": false,
+                            "defaultValue": "TEXT",
+                            "description": "Message type: TEXT, BYTES, or XML. JSON payloads are auto-detected and carried as TEXT. Supported values: TEXT, BYTES, XML"
+                        },
+                        {
+                            "name": "applicationMessageType",
+                            "type": "stringOrExpression",
+                            "required": false,
+                            "defaultValue": "",
+                            "description": "Application-defined message type."
+                        },
+                        {
+                            "name": "responseVariable",
+                            "type": "stringOrExpression",
+                            "required": false,
+                            "defaultValue": "solaceResponse",
+                            "description": "The name of the variable to which the output should be stored."
+                        },
+                        {
+                            "name": "overwriteBody",
+                            "type": "boolean",
+                            "required": false,
+                            "defaultValue": false,
+                            "description": "Replace the Message Body in Message Context with the response."
                         }
                     ],
                     "isHidden": false
