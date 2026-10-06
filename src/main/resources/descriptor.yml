@@ -1,4 +1,7 @@
-dependencies: []
+dependencies:
+  - groupId: "com.solace"
+    artifactId: "solace-opentelemetry-jcsmp-integration"
+    version: "1.2.0"
 
 repositories:
   - id: "wso2-nexus"

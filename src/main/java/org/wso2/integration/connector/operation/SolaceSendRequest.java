@@ -125,7 +125,7 @@ public class SolaceSendRequest extends AbstractConnectorOperation {
             BytesXMLMessage response;
             try {
                 response = connection.sendRequest(destinationType, destinationName, payload, deliveryMode,
-                        messageType, msgProperties, timeout, httpContentType);
+                        messageType, msgProperties, timeout, httpContentType, messageContext);
             } catch (JCSMPRequestTimeoutException e) {
                 handleException("sendRequest timed out after " + timeout + "ms. No response received from '"
                         + destinationName + "'.", e, messageContext);
